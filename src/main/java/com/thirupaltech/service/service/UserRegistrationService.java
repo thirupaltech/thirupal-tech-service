@@ -43,4 +43,15 @@ public class UserRegistrationService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered", exception);
         }
     }
+
+    @Transactional(readOnly = true)
+    public RegisterUserResponse login(String email, String password) {
+        User user = userRepository.findByEmail(email.trim().toLowerCase(Locale.ROOT))
+                .filter(User::isActive)
+                .filter(candidate -> candidate.getPasswordHash() != null
+                        && passwordEncoder.matches(password, candidate.getPasswordHash()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+
+        return RegisterUserResponse.from(user);
+    }
 }
